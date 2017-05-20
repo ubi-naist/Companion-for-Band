@@ -268,4 +268,6 @@ The data returned should be used only in resting mode. The SDK doesn’t provide
     <string name="cloud_summaries">SUMMARIES</string>
     <string name="cloud_activites">ACTIVITIES</string>
     <string name="cloud_profile">PROFILE</string>
+
+    <string name="presenter">PRESENTER</string>
 </resources>

@@ -24,6 +24,7 @@ import android.support.v4.app.FragmentPagerAdapter;
 
 import com.pimp.companionforband.R;
 import com.pimp.companionforband.fragments.extras.ExtrasFragment;
+import com.pimp.companionforband.fragments.presenter.PresenterFragment;
 import com.pimp.companionforband.fragments.sensors.SensorsFragment;
 import com.pimp.companionforband.fragments.theme.ThemeFragment;
 
@@ -42,6 +43,8 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
                 return new SensorsFragment();
             case 2:
                 return new ExtrasFragment();
+            case 3:
+                return new PresenterFragment();
             default:
                 return null;
         }
@@ -49,7 +52,7 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
     @Override
     public int getCount() {
-        return 3;
+        return 4;
     }
 
     @Override
@@ -61,6 +64,8 @@ public class SectionsPagerAdapter extends FragmentPagerAdapter {
                 return MainActivity.sContext.getString(R.string.sensors);
             case 2:
                 return MainActivity.sContext.getString(R.string.extras);
+            case 3:
+                return MainActivity.sContext.getString(R.string.presenter);
         }
         return null;
     }
