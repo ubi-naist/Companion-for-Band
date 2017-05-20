@@ -20,6 +20,11 @@
     <string name="app_name">Companion for Band</string>
     <string name="about">Developed by Adithya J</string>
 
+    <string name="client_id">client_id</string>
+    <string name="client_secret">client_secret</string>
+    <string name="oauth_token">oauth_token</string>
+    <string name="base64">base64</string>
+
     <string name="accelerometer">Accelerometer</string>
     <string name="altimeter">Altimeter</string>
     <string name="barometer">Barometer</string>
