@@ -1,9 +1,11 @@
 package com.pimp.companionforband.fragments.presenter;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,6 +13,10 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.Description;
+import com.github.mikephil.charting.components.Legend;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
@@ -38,6 +44,18 @@ public class PresenterFragment extends Fragment {
 
     String TAG = PresenterFragment.class.getSimpleName();
 
+    private static final float ACC_MAX = 3.0f;
+    private static final float ACC_MIN = 0.8f;
+    private static final float GSR_MAX = 4000f;
+    private static final float GSR_MIN = 2000f;
+    private static final float HR_MAX = 150f;
+    private static final float HR_MIN = 60f;
+
+    private static final int LISTENER_INTERVAL = 5000;
+
+    private static String[] labels = {"MOVE", "GSR", "HR"};
+    private static int[] colors = {R.color.md_orange_A400, R.color.md_blue_300, R.color.md_red_400};
+
     private static TextView heartRateTextView;
     private static LineChart sensorChart;
 
@@ -51,31 +69,78 @@ public class PresenterFragment extends Fragment {
                 @Override
                 public void run() {
                     heartRateTextView.setText(bandHeartRateEvent.getHeartRate() + " BPM");
-                }
+}
             });
-        }
-    };
+                    }
+                    };
 
     public static BandSensorObserver.SensorsViewListener sensorsViewListener = new BandSensorObserver.SensorsViewListener() {
         @Override
         public void onSensorChanged(float accVal, float gsrVal, float heartVal) {
             Log.d("test", "sensor " + accVal +" " + gsrVal + " " + heartVal);
 
-            float normalizedAcc = accVal / 3.0f;
-            float normalizedGsr = gsrVal / 4000.0f;
-            float normalizedHeart = heartVal / 140f;
+            float normalizedAcc = (accVal - ACC_MIN) / (ACC_MAX - ACC_MIN);
+            float normalizedGsr = (gsrVal - GSR_MIN) / (GSR_MAX - GSR_MIN);
+            float normalizedHeart = (heartVal - HR_MIN) / (HR_MAX - HR_MIN);
 
-            LineData lineData = sensorChart.getLineData();
-            int xVal = lineData.getEntryCount();
-            lineData.addEntry(new Entry(xVal, normalizedAcc), 0);
-            lineData.addEntry(new Entry(xVal, normalizedGsr), 1);
-            lineData.addEntry(new Entry(xVal, normalizedHeart), 2);
+            float[] vals = {normalizedAcc, normalizedGsr, normalizedHeart};
 
-            lineData.notifyDataChanged();
-            sensorChart.notifyDataSetChanged();
-            sensorChart.moveViewToX(lineData.getEntryCount());
+            if(sensorChart.getLineData() == null){
+                LineData lineData = new LineData();
+
+                for(int i=0; i<3; i++){
+                    ArrayList<Entry> list = new ArrayList<>();
+                    list.add(new Entry(0, vals[i]));
+                    LineDataSet lineDataSet = new LineDataSet(list, labels[i]);
+
+                    int color = ContextCompat.getColor(MainActivity.sContext, colors[i]);
+                    lineDataSet.setColor(color);
+
+                    // lineDataSet.setDrawCircleHole(false);
+                    lineDataSet.setCircleColor(color);
+
+                    lineDataSet.setLineWidth(2.0f);
+                    lineData.addDataSet(lineDataSet);
+
+                    lineDataSet.setDrawValues(false);
+                }
+                sensorChart.setData(lineData);
+                sensorChart.notifyDataSetChanged();
+                sensorChart.moveViewToX(lineData.getEntryCount());
+            }else{
+                LineData lineData = sensorChart.getLineData();
+                float xVal = lineData.getEntryCount() / 3.0f  * LISTENER_INTERVAL / 60000f;
+                for(int i=0; i<3; i++){
+                    lineData.addEntry(new Entry(xVal, vals[i]), i);
+                }
+
+                lineData.notifyDataChanged();
+                sensorChart.notifyDataSetChanged();
+                sensorChart.moveViewToX(lineData.getEntryCount());
+            }
         }
     };
+
+    private void initGraph(){
+        sensorChart.setNoDataText("No Sensor Data...");
+
+        Description description = sensorChart.getDescription();
+        description.setEnabled(false);
+
+        int whiteColor = ContextCompat.getColor(MainActivity.sContext, R.color.md_white_1000);
+
+        XAxis xAxis = sensorChart.getXAxis();
+        xAxis.setTextColor(whiteColor);
+
+        YAxis axisLeft = sensorChart.getAxisLeft();
+        axisLeft.setEnabled(false);
+
+        YAxis axisRight = sensorChart.getAxisRight();
+        axisRight.setEnabled(false);
+
+        Legend legend = sensorChart.getLegend();
+        legend.setTextColor(whiteColor);
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -89,18 +154,9 @@ public class PresenterFragment extends Fragment {
         Log.d(TAG, "onViewCreated");
 
         sensorChart = (LineChart) view.findViewById(R.id.sensors_graph);
-        LineData lineData = new LineData();
+        initGraph();
 
-        for(int i=0; i<3; i++){
-            ArrayList<Entry> list = new ArrayList<>();
-            list.add(new Entry(0,0));
-            LineDataSet lineDataSet = new LineDataSet(list, i + "");
-            lineData.addDataSet(lineDataSet);
-        }
-
-        sensorChart.setData(lineData);
-
-        bandSensorObserver = new BandSensorObserver(MainActivity.client, 5000);
+        bandSensorObserver = new BandSensorObserver(MainActivity.client, LISTENER_INTERVAL);
         bandSensorObserver.setHeartRateListener(bandHeartRateEventListener);
         bandSensorObserver.setSensorsViewListener(sensorsViewListener);
 
@@ -111,6 +167,7 @@ public class PresenterFragment extends Fragment {
     public void onResume() {
         super.onResume();
         Log.d(TAG, "onResume");
+        bandSensorObserver.setSensorsViewListener(sensorsViewListener);
         bandSensorObserver.startObserve();
     }
 

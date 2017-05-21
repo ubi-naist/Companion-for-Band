@@ -17,6 +17,7 @@ import com.microsoft.band.sensors.BandHeartRateEventListener;
 import com.microsoft.band.sensors.GsrSampleRate;
 import com.microsoft.band.sensors.SampleRate;
 import com.pimp.companionforband.utils.band.BandUtils;
+import com.pimp.companionforband.utils.band.listeners.AccelerometerEventListener;
 
 import java.util.ArrayList;
 
@@ -80,7 +81,8 @@ public class BandSensorObserver {
                 if(sensorsViewListener != null){
                     float accVal = 0.0f;
                     if(accelerometerEvents.size() > 0){
-                        for(BandAccelerometerEvent event:accelerometerEvents){
+                        ArrayList<BandAccelerometerEvent> copiedList = (ArrayList<BandAccelerometerEvent>) accelerometerEvents.clone();
+                        for(BandAccelerometerEvent event : copiedList){
                             float acc = (float) Math.sqrt(
                                     event.getAccelerationX() * event.getAccelerationX() +
                                             event.getAccelerationY() * event.getAccelerationY() +
@@ -93,7 +95,8 @@ public class BandSensorObserver {
 
                     float gsrVal = 0.0f;
                     if(gsrEvents.size() > 0){
-                        for(BandGsrEvent event:gsrEvents){
+                        ArrayList<BandGsrEvent> copiedList = (ArrayList<BandGsrEvent>) gsrEvents.clone();
+                        for(BandGsrEvent event : copiedList){
                             int gsr = event.getResistance();
                             gsrVal += gsr;
                         }
@@ -101,9 +104,9 @@ public class BandSensorObserver {
                     }
 
                     float heartVal = 0.0f;
-
                     if(heartRateEvents.size() > 0){
-                        for(BandHeartRateEvent event:heartRateEvents){
+                        ArrayList<BandHeartRateEvent> copiedList = (ArrayList<BandHeartRateEvent>) heartRateEvents.clone();
+                        for(BandHeartRateEvent event : copiedList){
                             int heart = event.getHeartRate();
                             heartVal += heart;
                         }
