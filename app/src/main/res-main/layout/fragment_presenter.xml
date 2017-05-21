@@ -1,12 +1,45 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.pimp.companionforband.fragments.presenter.PresenterFragment">
+    tools:context="com.pimp.companionforband.fragments.presenter.PresenterFragment"
+    android:orientation="vertical" >
 
-    <TextView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="Hello World" />
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="8dp">
+        <ImageView
+            android:id="@+id/heartRateImageView"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_margin="8dp"
+            app:srcCompat="@drawable/ic_heart_pulse" />
+        <TextView
+            android:id="@+id/heartRateTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:text="0 BPM"
+            android:layout_gravity="center_horizontal|center_vertical"
+            android:textAppearance="?android:textAppearanceLarge"/>
+    </LinearLayout>
 
-</FrameLayout>
+    <android.support.v7.widget.CardView
+        android:id="@+id/sensors_card"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:foreground="?android:attr/selectableItemBackground">
+
+        <com.robinhood.spark.SparkView
+            android:id="@+id/sensors_graph"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_margin="20dp"
+            app:spark_lineColor="@color/accent"
+            app:spark_scrubEnabled="true" />
+    </android.support.v7.widget.CardView>
+</LinearLayout>
