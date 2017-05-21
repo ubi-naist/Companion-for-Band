@@ -22,7 +22,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="8dp"
-            android:text="0 BPM"
+            android:text="- BPM"
             android:layout_gravity="center_horizontal|center_vertical"
             android:textAppearance="?android:textAppearanceLarge"/>
     </LinearLayout>
@@ -34,12 +34,10 @@
         android:layout_margin="5dp"
         android:foreground="?android:attr/selectableItemBackground">
 
-        <com.robinhood.spark.SparkView
-            android:id="@+id/sensors_graph"
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:layout_margin="20dp"
-            app:spark_lineColor="@color/accent"
-            app:spark_scrubEnabled="true" />
+    <com.github.mikephil.charting.charts.LineChart
+        android:id="@+id/sensors_graph"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        android:layout_margin="20dp" />
     </android.support.v7.widget.CardView>
 </LinearLayout>

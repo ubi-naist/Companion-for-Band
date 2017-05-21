@@ -10,6 +10,11 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.microsoft.band.BandException;
 import com.microsoft.band.BandIOException;
 import com.microsoft.band.InvalidBandVersionException;
@@ -27,32 +32,50 @@ import com.pimp.companionforband.utils.band.BandUtils;
 import com.pimp.companionforband.utils.band.subscription.Band1SubscriptionTask;
 import com.pimp.companionforband.utils.band.subscription.Band2SubscriptionTask;
 
+import java.util.ArrayList;
+
 public class PresenterFragment extends Fragment {
 
     String TAG = PresenterFragment.class.getSimpleName();
 
-    public static BandAccelerometerEventListener bandAccelerometerEventListener;
-    public static BandGsrEventListener bandGsrEventListener;
-    public static BandHeartRateEventListener bandHeartRateEventListener;
+    private static TextView heartRateTextView;
+    private static LineChart sensorChart;
 
-    private TextView heartRateTextView;
+    private BandSensorObserver bandSensorObserver;
 
-    private void redisterBandListener(){
-        try {
-            MainActivity.client.getSensorManager().
-                    registerAccelerometerEventListener(bandAccelerometerEventListener, SampleRate.MS128);
-            MainActivity.client.getSensorManager().
-                    registerGsrEventListener(bandGsrEventListener, GsrSampleRate.MS200);
-            MainActivity.client.getSensorManager().
-                    registerHeartRateEventListener(bandHeartRateEventListener);
-        } catch (BandIOException e) {
-            BandUtils.handleBandException(e);
-        } catch (InvalidBandVersionException e) {
-            MainActivity.appendToUI(e.getMessage(), "Style.ALERT");
-        } catch (BandException e) {
-            MainActivity.appendToUI(e.getMessage(), "Style.ALERT");
+    public static BandHeartRateEventListener bandHeartRateEventListener = new BandHeartRateEventListener() {
+        @Override
+        public void onBandHeartRateChanged(final BandHeartRateEvent bandHeartRateEvent) {
+            // Log.d("test", "heart " + bandHeartRateEvent.getHeartRate());
+            MainActivity.sActivity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    heartRateTextView.setText(bandHeartRateEvent.getHeartRate() + " BPM");
+                }
+            });
         }
-    }
+    };
+
+    public static BandSensorObserver.SensorsViewListener sensorsViewListener = new BandSensorObserver.SensorsViewListener() {
+        @Override
+        public void onSensorChanged(float accVal, float gsrVal, float heartVal) {
+            Log.d("test", "sensor " + accVal +" " + gsrVal + " " + heartVal);
+
+            float normalizedAcc = accVal / 3.0f;
+            float normalizedGsr = gsrVal / 4000.0f;
+            float normalizedHeart = heartVal / 140f;
+
+            LineData lineData = sensorChart.getLineData();
+            int xVal = lineData.getEntryCount();
+            lineData.addEntry(new Entry(xVal, normalizedAcc), 0);
+            lineData.addEntry(new Entry(xVal, normalizedGsr), 1);
+            lineData.addEntry(new Entry(xVal, normalizedHeart), 2);
+
+            lineData.notifyDataChanged();
+            sensorChart.notifyDataSetChanged();
+            sensorChart.moveViewToX(lineData.getEntryCount());
+        }
+    };
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -64,64 +87,37 @@ public class PresenterFragment extends Fragment {
     public void onViewCreated(View view, @Nullable final Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         Log.d(TAG, "onViewCreated");
+
+        sensorChart = (LineChart) view.findViewById(R.id.sensors_graph);
+        LineData lineData = new LineData();
+
+        for(int i=0; i<3; i++){
+            ArrayList<Entry> list = new ArrayList<>();
+            list.add(new Entry(0,0));
+            LineDataSet lineDataSet = new LineDataSet(list, i + "");
+            lineData.addDataSet(lineDataSet);
+        }
+
+        sensorChart.setData(lineData);
+
+        bandSensorObserver = new BandSensorObserver(MainActivity.client, 5000);
+        bandSensorObserver.setHeartRateListener(bandHeartRateEventListener);
+        bandSensorObserver.setSensorsViewListener(sensorsViewListener);
+
         heartRateTextView = (TextView) view.findViewById(R.id.heartRateTextView);
-        bandAccelerometerEventListener = new BandAccelerometerEventListener() {
-            @Override
-            public void onBandAccelerometerChanged(BandAccelerometerEvent bandAccelerometerEvent) {
-                Log.d(
-                        TAG,
-                        bandAccelerometerEvent.getAccelerationX() + " " +
-                        bandAccelerometerEvent.getAccelerationY() + " " +
-                        bandAccelerometerEvent.getAccelerationZ()
-                );
-            }
-        };
-        bandGsrEventListener = new BandGsrEventListener() {
-            @Override
-            public void onBandGsrChanged(BandGsrEvent bandGsrEvent) {
-                Log.d(
-                        TAG,
-                        bandGsrEvent.getResistance() + " "
-                );
-            }
-        };
-        bandHeartRateEventListener = new BandHeartRateEventListener() {
-            @Override
-            public void onBandHeartRateChanged(BandHeartRateEvent bandHeartRateEvent) {
-                Log.d(
-                        TAG,
-                        bandHeartRateEvent.getHeartRate() + " "
-                );
-
-                final int heartRate = bandHeartRateEvent.getHeartRate();
-                MainActivity.sActivity.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        heartRateTextView.setText(heartRate + " BPM");
-                    }
-                });
-
-            }
-        };
     }
 
     @Override
     public void onResume() {
         super.onResume();
         Log.d(TAG, "onResume");
-        redisterBandListener();
+        bandSensorObserver.startObserve();
     }
 
     @Override
     public void onPause(){
         super.onPause();
         Log.d(TAG, "onPause");
-        try {
-            MainActivity.client.getSensorManager().unregisterAccelerometerEventListener(bandAccelerometerEventListener);
-            MainActivity.client.getSensorManager().unregisterHeartRateEventListener(bandHeartRateEventListener);
-            MainActivity.client.getSensorManager().unregisterGsrEventListener(bandGsrEventListener);
-        } catch (BandIOException e) {
-            BandUtils.handleBandException(e);
-        }
+        bandSensorObserver.stopObserve();
     }
 }
