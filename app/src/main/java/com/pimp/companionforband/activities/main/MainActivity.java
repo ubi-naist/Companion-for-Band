@@ -106,7 +106,7 @@ public class MainActivity extends AppCompatActivity implements NegativeReviewLis
     private static final String SAMPLE_CROPPED_IMAGE_NAME = "SampleCropImage.jpeg";
 
     public static Context sContext;
-    public static Activity sActivity;
+    public static AppCompatActivity sActivity;
 
     public static BandClient client = null;
     public static boolean band2 = false;
@@ -116,6 +116,8 @@ public class MainActivity extends AppCompatActivity implements NegativeReviewLis
     public static SharedPreferences.Editor editor;
 
     public static BandSensorData bandSensorData;
+
+    public static TabLayout tabLayout;
 
     int base = 0;
     int r, g, b;
@@ -405,7 +407,7 @@ public class MainActivity extends AppCompatActivity implements NegativeReviewLis
             public void onPageScrollStateChanged(int state) {
             }
         });
-        TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
+        tabLayout = (TabLayout) findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(mViewPager);
 
         Drawable headerBackground = null;
